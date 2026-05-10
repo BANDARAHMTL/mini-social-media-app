@@ -6,6 +6,7 @@ import PostCard from '../components/PostCard';
 import CreatePost from '../components/CreatePost';
 import UserCard from '../components/UserCard';
 import api from '../api';
+import './ProfilePage.css';
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function ProfilePage() {
       setEditPicFile(null);
     }).catch(() => navigate('/'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate]);
 
   const loadFollowers = async () => {
     const { data } = await api.get(`/users/${id}/followers`);
@@ -103,22 +104,22 @@ export default function ProfilePage() {
   return (
     <div>
       {/* Cover */}
-      <div style={{ background: 'var(--bg-up)', padding: '32px 16px 0' }}>
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ paddingTop: 56, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 14 }}>
+      <div className="profile-cover">
+        <div className="profile-header-inner">
+          <div className="profile-top">
             <Avatar username={profile.username} size={76} src={profile.profile_pic} />
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="profile-actions">
               {isOwn ? (
-                <button onClick={() => setEditing(v => !v)} className="btn-secondary" style={{ padding: '7px 16px', fontSize: 13 }}>
+                <button onClick={() => setEditing(v => !v)} className="btn-secondary">
                   {editing ? 'Cancel' : 'Edit profile'}
                 </button>
               ) : (
                 <>
-                  <button onClick={() => navigate(`/messages/${profile.id}`)} className="btn-secondary" style={{ padding: '7px 16px', fontSize: 13 }}>
+                  <button onClick={() => navigate(`/messages/${profile.id}`)} className="btn-secondary">
                     Message
                   </button>
                   <button onClick={toggleFollow} className={profile.is_following ? 'btn-secondary active' : 'btn-primary'}
-                    style={{ padding: '7px 16px', fontSize: 13 }} disabled={followLoading}>
+                    disabled={followLoading}>
                     {profile.is_following ? 'Following' : 'Follow'}
                   </button>
                 </>
@@ -126,49 +127,46 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: -0.5 }}>{profile.username}</div>
+          <div className="profile-username">{profile.username}</div>
 
           {editing ? (
-            <div style={{ marginTop: 10 }}>
-              <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Bio" style={{ minHeight: 60, marginBottom: 8 }} />
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input type="date" value={editBirthday} onChange={e => setEditBirthday(e.target.value)} placeholder="Birthday" style={{ flex: 1 }} />
-                <input type="text" value={editContact} onChange={e => setEditContact(e.target.value)} placeholder="Contact Number" style={{ flex: 1 }} />
+            <div className="profile-edit-form">
+              <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Bio" />
+              <div className="profile-edit-row">
+                <input type="date" value={editBirthday} onChange={e => setEditBirthday(e.target.value)} placeholder="Birthday" />
+                <input type="text" value={editContact} onChange={e => setEditContact(e.target.value)} placeholder="Contact Number" />
               </div>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input type="text" value={editSchool} onChange={e => setEditSchool(e.target.value)} placeholder="School / University" style={{ flex: 1 }} />
-                <input type="text" value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="Address" style={{ flex: 1 }} />
+              <div className="profile-edit-row">
+                <input type="text" value={editSchool} onChange={e => setEditSchool(e.target.value)} placeholder="School / University" />
+                <input type="text" value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="Address" />
               </div>
-              <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-muted)' }}>
+              <div className="profile-pic-upload">
                 Profile picture:
-                <input type="file" accept="image/*" onChange={e => setEditPicFile(e.target.files[0])} style={{ display: 'block', marginTop: 4, color: 'var(--text)' }} />
+                <input type="file" accept="image/*" onChange={e => setEditPicFile(e.target.files[0])} />
               </div>
-              <button className="btn-primary" onClick={saveProfile} style={{ padding: '7px 18px', fontSize: 13 }}>Save changes</button>
+              <button className="btn-primary profile-save-btn" onClick={saveProfile}>Save changes</button>
             </div>
           ) : (
             <>
-              <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 6 }}>{profile.bio || 'No bio yet.'}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12, fontSize: 13, color: 'var(--text-muted)' }}>
-                {profile.school && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>🎓 {profile.school}</div>}
-                {profile.address && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>📍 {profile.address}</div>}
-                {profile.birthday && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>🎂 {profile.birthday}</div>}
-                {profile.contact_number && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>📞 {profile.contact_number}</div>}
+              <div className="profile-bio">{profile.bio || 'No bio yet.'}</div>
+              <div className="profile-details">
+                {profile.school && <div className="profile-detail-item">🎓 {profile.school}</div>}
+                {profile.address && <div className="profile-detail-item">📍 {profile.address}</div>}
+                {profile.birthday && <div className="profile-detail-item">🎂 {profile.birthday}</div>}
+                {profile.contact_number && <div className="profile-detail-item">📞 {profile.contact_number}</div>}
               </div>
             </>
           )}
 
-          <div style={{ display: 'flex', gap: 0, marginTop: 20, borderTop: '1px solid var(--border-faint)' }}>
+          <div className="profile-tabs">
             {[
               { key: 'posts',     label: 'Posts',     count: profile.posts_count },
               { key: 'followers', label: 'Followers',  count: profile.followers_count },
               { key: 'following', label: 'Following',  count: profile.following_count },
             ].map(s => (
-              <button key={s.key} onClick={() => handleTabChange(s.key)} style={{
-                flex: 1, padding: '14px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center',
-                borderBottom: tab === s.key ? '2px solid var(--accent)' : '2px solid transparent',
-              }}>
-                <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--text)' }}>{s.count}</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{s.label}</div>
+              <button key={s.key} onClick={() => handleTabChange(s.key)} className={`profile-tab ${tab === s.key ? 'active' : ''}`}>
+                <div className="profile-tab-count">{s.count}</div>
+                <div className="profile-tab-label">{s.label}</div>
               </button>
             ))}
           </div>
@@ -176,7 +174,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Tab content */}
-      <div className="page-wrapper" style={{ paddingTop: 20 }}>
+      <div className="page-wrapper profile-tab-content">
         {tab === 'posts' && (
           <>
             {isOwn && <CreatePost onPost={handlePost} />}
