@@ -30,7 +30,7 @@ export default function Navbar() {
           pulse.
         </Link>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {[{ to: '/', label: 'Feed' }, { to: '/explore', label: 'Explore' }].map(n => (
+          {[{ to: '/', label: 'Feed' }, { to: '/explore', label: 'Explore' }, { to: '/messages', label: 'Messages' }].map(n => (
             <Link key={n.to} to={n.to} style={{
               padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500,
               background: isActive(n.to) ? 'var(--bg-input)' : 'transparent',

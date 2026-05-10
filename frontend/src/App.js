@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import FeedPage from './pages/FeedPage';
 import ExplorePage from './pages/ExplorePage';
 import ProfilePage from './pages/ProfilePage';
+import MessagesPage from './pages/MessagesPage';
 import { Spinner } from './components/UI';
 import './index.css';
 
@@ -30,6 +31,8 @@ function AppRoutes() {
         <Route path="/" element={<PrivateRoute><FeedPage /></PrivateRoute>} />
         <Route path="/explore" element={<PrivateRoute><ExplorePage /></PrivateRoute>} />
         <Route path="/profile/:id" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+        <Route path="/messages" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
+        <Route path="/messages/:id" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

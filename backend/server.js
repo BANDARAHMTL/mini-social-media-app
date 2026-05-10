@@ -6,6 +6,7 @@ const path = require('path');
 const authRoutes  = require('./routes/auth');
 const userRoutes  = require('./routes/users');
 const postRoutes  = require('./routes/posts');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth',  authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Follow route is on users router but at top level for convenience
 const auth = require('./middleware/auth');

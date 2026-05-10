@@ -113,10 +113,15 @@ export default function ProfilePage() {
                   {editing ? 'Cancel' : 'Edit profile'}
                 </button>
               ) : (
-                <button onClick={toggleFollow} className={profile.is_following ? 'btn-secondary active' : 'btn-primary'}
-                  style={{ padding: '7px 16px', fontSize: 13 }} disabled={followLoading}>
-                  {profile.is_following ? 'Following' : 'Follow'}
-                </button>
+                <>
+                  <button onClick={() => navigate(`/messages/${profile.id}`)} className="btn-secondary" style={{ padding: '7px 16px', fontSize: 13 }}>
+                    Message
+                  </button>
+                  <button onClick={toggleFollow} className={profile.is_following ? 'btn-secondary active' : 'btn-primary'}
+                    style={{ padding: '7px 16px', fontSize: 13 }} disabled={followLoading}>
+                    {profile.is_following ? 'Following' : 'Follow'}
+                  </button>
+                </>
               )}
             </div>
           </div>
