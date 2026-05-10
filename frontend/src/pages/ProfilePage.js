@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [editSchool, setEditSchool] = useState('');
   const [editPicFile, setEditPicFile] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isOwn = id === me.id;
 
@@ -59,6 +60,7 @@ export default function ProfilePage() {
 
   const handleTabChange = async (t) => {
     setTab(t);
+    setSearchQuery(''); // Clear search when changing tabs
     if (t === 'followers' && !followers.length) await loadFollowers();
     if (t === 'following' && !following.length) await loadFollowing();
   };
@@ -175,22 +177,54 @@ export default function ProfilePage() {
 
       {/* Tab content */}
       <div className="page-wrapper profile-tab-content">
+        <div style={{ marginBottom: 16 }}>
+          <input 
+            type="text" 
+            placeholder={`Search ${tab}...`}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--bg-input)',
+              color: 'var(--text)',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+
         {tab === 'posts' && (
           <>
             {isOwn && <CreatePost onPost={handlePost} />}
             {posts.length === 0 && <EmptyState icon="📝" title="No posts yet" />}
-            {posts.map(p => <PostCard key={p.id} post={p} onDelete={handleDelete} />)}
+            {posts
+              .filter(p => p.content.toLowerCase().includes(searchQuery.toLowerCase()))
+              .map(p => <PostCard key={p.id} post={p} onDelete={handleDelete} />)
+            }
+            {posts.length > 0 && posts.filter(p => p.content.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+              <EmptyState icon="🔍" title="No posts match your search" />
+            )}
           </>
         )}
         {tab === 'followers' && (
           followers.length === 0
             ? <EmptyState icon="👥" title="No followers yet" />
-            : followers.map(u => <UserCard key={u.id} user={u} initialFollowing={false} />)
+            : followers.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase())).length === 0
+              ? <EmptyState icon="🔍" title="No followers match your search" />
+              : followers
+                .filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(u => <UserCard key={u.id} user={u} initialFollowing={false} />)
         )}
         {tab === 'following' && (
           following.length === 0
             ? <EmptyState icon="👥" title="Not following anyone" />
-            : following.map(u => <UserCard key={u.id} user={u} initialFollowing={true} />)
+            : following.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase())).length === 0
+              ? <EmptyState icon="🔍" title="No users match your search" />
+              : following
+                .filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(u => <UserCard key={u.id} user={u} initialFollowing={true} />)
         )}
       </div>
     </div>

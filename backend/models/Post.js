@@ -2,7 +2,7 @@ const pool = require('../config/db');
 
 const postSelect = `
   SELECT
-    p.id, p.content, p.image_url, p.created_at, p.updated_at,
+    p.id, p.content, p.image_url, p.video_url, p.created_at, p.updated_at,
     u.id   AS author_id,
     u.username AS author_username,
     u.profile_pic AS author_pic,
@@ -56,17 +56,17 @@ class Post {
     return rows;
   }
 
-  static async create(id, userId, content, imageUrl) {
+  static async create(id, userId, content, imageUrl, videoUrl) {
     await pool.query(
-      'INSERT INTO posts (id, user_id, content, image_url) VALUES (?, ?, ?, ?)',
-      [id, userId, content, imageUrl || null]
+      'INSERT INTO posts (id, user_id, content, image_url, video_url) VALUES (?, ?, ?, ?, ?)',
+      [id, userId, content, imageUrl || null, videoUrl || null]
     );
   }
 
-  static async update(id, content, imageUrl) {
+  static async update(id, content, imageUrl, videoUrl) {
     await pool.query(
-      'UPDATE posts SET content = ?, image_url = ? WHERE id = ?',
-      [content, imageUrl, id]
+      'UPDATE posts SET content = ?, image_url = ?, video_url = ? WHERE id = ?',
+      [content, imageUrl, videoUrl, id]
     );
   }
 

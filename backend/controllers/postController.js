@@ -30,8 +30,15 @@ exports.getPost = catchAsync(async (req, res) => {
 exports.createPost = catchAsync(async (req, res) => {
   const { content } = req.body;
   let image_url = req.body.image_url;
+  let video_url = req.body.video_url;
+  
   if (req.file) {
-    image_url = `/uploads/${req.file.filename}`;
+    const mediaUrl = `/uploads/${req.file.filename}`;
+    if (req.file.mimetype.startsWith('video/')) {
+      video_url = mediaUrl;
+    } else {
+      image_url = mediaUrl;
+    }
   }
   
   if (!content || !content.trim()) {
@@ -39,7 +46,7 @@ exports.createPost = catchAsync(async (req, res) => {
   }
   
   const id = uuidv4();
-  await Post.create(id, req.user.id, content.trim(), image_url || null);
+  await Post.create(id, req.user.id, content.trim(), image_url || null, video_url || null);
   const rows = await Post.findById(id);
   const enriched = await Post.enrichPost(rows[0], req.user.id);
   res.status(201).json(enriched);
@@ -48,15 +55,22 @@ exports.createPost = catchAsync(async (req, res) => {
 exports.updatePost = catchAsync(async (req, res) => {
   const { content } = req.body;
   let image_url = req.body.image_url;
+  let video_url = req.body.video_url;
+  
   if (req.file) {
-    image_url = `/uploads/${req.file.filename}`;
+    const mediaUrl = `/uploads/${req.file.filename}`;
+    if (req.file.mimetype.startsWith('video/')) {
+      video_url = mediaUrl;
+    } else {
+      image_url = mediaUrl;
+    }
   }
   
   const rows = await Post.findRawById(req.params.id);
   if (rows.length === 0) return res.status(404).json({ message: 'Post not found' });
   if (rows[0].user_id !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
   
-  await Post.update(req.params.id, content ?? rows[0].content, image_url ?? rows[0].image_url);
+  await Post.update(req.params.id, content ?? rows[0].content, image_url ?? rows[0].image_url, video_url ?? rows[0].video_url);
   const updated = await Post.findById(req.params.id);
   const enriched = await Post.enrichPost(updated[0], req.user.id);
   res.json(enriched);

@@ -9,8 +9,8 @@ router.get('/', auth, postController.getFeed);
 router.get('/explore', auth, postController.getExplore);
 router.get('/user/:userId', auth, postController.getUserPosts);
 router.get('/:id', auth, postController.getPost);
-router.post('/', auth, upload.single('image'), postController.createPost);
-router.put('/:id', auth, upload.single('image'), postController.updatePost);
+router.post('/', auth, upload.single('media'), postController.createPost);
+router.put('/:id', auth, upload.single('media'), postController.updatePost);
 router.delete('/:id', auth, postController.deletePost);
 
 router.post('/:id/like', auth, postController.toggleLike);
