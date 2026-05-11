@@ -16,20 +16,31 @@ const postSelect = `
 
 class Post {
   static async enrichPost(post, userId) {
-    const [liked] = await pool.query(
-      'SELECT id FROM likes WHERE post_id = ? AND user_id = ?', [post.id, userId]
-    );
-    const [shared] = await pool.query(
-      'SELECT id FROM shares WHERE post_id = ? AND user_id = ?', [post.id, userId]
-    );
-    const poll = await this.getPollByPostId(post.id);
-    
-    return { 
-      ...post, 
-      liked_by_me: liked.length > 0,
-      shared_by_me: shared.length > 0,
-      poll: poll || null
-    };
+    try {
+      const [liked] = await pool.query(
+        'SELECT id FROM likes WHERE post_id = ? AND user_id = ?', [post.id, userId]
+      );
+      const [shared] = await pool.query(
+        'SELECT id FROM shares WHERE post_id = ? AND user_id = ?', [post.id, userId]
+      );
+      const poll = await this.getPollByPostId(post.id);
+      
+      return { 
+        ...post, 
+        liked_by_me: liked.length > 0,
+        shared_by_me: shared.length > 0,
+        poll: poll || null
+      };
+    } catch (error) {
+      // If columns or tables don't exist yet, return basic enriched post
+      console.warn('Warning: Some post enrichment fields unavailable:', error.message);
+      return { 
+        ...post, 
+        liked_by_me: false,
+        shared_by_me: false,
+        poll: null
+      };
+    }
   }
 
   static async findFeed(userId) {

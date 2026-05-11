@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const initializeDatabase = require('./config/initDb');
 
 const authRoutes  = require('./routes/auth');
 const userRoutes  = require('./routes/users');
@@ -27,13 +28,13 @@ app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/messages', messageRoutes);
 
+// Health check (before auth-protected routes)
+app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
+
 // Follow route is on users router but at top level for convenience
 const auth = require('./middleware/auth');
 const userRouter = require('./routes/users');
 app.use('/api', userRouter); // exposes /api/follow/:userId
-
-// Health check
-app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 // ── 404 ────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
@@ -45,4 +46,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Pulse API running on http://localhost:${PORT}`));
+
+// Initialize database tables and start server
+initializeDatabase().then(() => {
+  app.listen(PORT, () => console.log(`🚀 Pulse API running on http://localhost:${PORT}`));
+}).catch(error => {
+  console.error('Failed to initialize database:', error);
+  // Still start the server even if initialization fails
+  app.listen(PORT, () => console.log(`🚀 Pulse API running on http://localhost:${PORT}`));
+});
