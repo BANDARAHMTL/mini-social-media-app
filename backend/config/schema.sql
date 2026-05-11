@@ -64,6 +64,54 @@ CREATE TABLE IF NOT EXISTS follows (
   FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- ── Shares ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS shares (
+  id         VARCHAR(36) PRIMARY KEY,
+  post_id    VARCHAR(36) NOT NULL,
+  user_id    VARCHAR(36) NOT NULL,
+  shared_at  DATETIME    DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_share (post_id, user_id),
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_post_id (post_id),
+  INDEX idx_user_id (user_id)
+);
+
+-- ── Polls ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS polls (
+  id         VARCHAR(36) PRIMARY KEY,
+  post_id    VARCHAR(36) NOT NULL UNIQUE,
+  question   TEXT        NOT NULL,
+  created_at DATETIME    DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME    DEFAULT NULL,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  INDEX idx_post_id (post_id)
+);
+
+-- ── Poll Options ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS poll_options (
+  id      VARCHAR(36) PRIMARY KEY,
+  poll_id VARCHAR(36) NOT NULL,
+  text    TEXT        NOT NULL,
+  FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+  INDEX idx_poll_id (poll_id)
+);
+
+-- ── Poll Votes ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS poll_votes (
+  id         VARCHAR(36) PRIMARY KEY,
+  poll_id    VARCHAR(36) NOT NULL,
+  option_id  VARCHAR(36) NOT NULL,
+  user_id    VARCHAR(36) NOT NULL,
+  voted_at   DATETIME    DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_poll_user (poll_id, user_id),
+  FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+  FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_poll_id (poll_id),
+  INDEX idx_user_id (user_id)
+);
+
 -- ── Seed demo data ───────────────────────────────────────────
 -- Passwords are bcrypt hash of "password123"
 INSERT IGNORE INTO users (id, username, email, password, bio) VALUES

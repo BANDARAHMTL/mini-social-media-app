@@ -123,3 +123,70 @@ exports.deleteComment = catchAsync(async (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
+exports.toggleShare = catchAsync(async (req, res) => {
+  const existing = await Post.checkShare(req.params.id, req.user.id);
+  if (existing.length > 0) {
+    await Post.removeShare(req.params.id, req.user.id);
+    const count = await Post.getShareCount(req.params.id);
+    return res.json({ shared: false, share_count: count });
+  } else {
+    await Post.addShare(uuidv4(), req.params.id, req.user.id);
+    const count = await Post.getShareCount(req.params.id);
+    return res.json({ shared: true, share_count: count });
+  }
+});
+
+exports.createPoll = catchAsync(async (req, res) => {
+  const { question, options } = req.body;
+  
+  if (!question || !question.trim()) {
+    return res.status(400).json({ message: 'Poll question is required' });
+  }
+  
+  if (!options || !Array.isArray(options) || options.length < 2) {
+    return res.status(400).json({ message: 'At least 2 poll options are required' });
+  }
+  
+  // Check if post exists
+  const post = await Post.findRawById(req.params.id);
+  if (post.length === 0) return res.status(404).json({ message: 'Post not found' });
+  if (post[0].user_id !== req.user.id) return res.status(403).json({ message: 'Only post owner can add polls' });
+
+  const pollId = uuidv4();
+  await Post.createPoll(pollId, req.params.id, question.trim(), options);
+  const poll = await Post.getPoll(pollId);
+  res.status(201).json(poll);
+});
+
+exports.votePoll = catchAsync(async (req, res) => {
+  const { optionId } = req.body;
+  
+  if (!optionId) {
+    return res.status(400).json({ message: 'optionId is required' });
+  }
+
+  // Check if poll exists
+  const poll = await Post.getPoll(req.params.pollId);
+  if (!poll) return res.status(404).json({ message: 'Poll not found' });
+
+  // Check if option exists in this poll
+  const optionExists = poll.options.some(opt => opt.id === optionId);
+  if (!optionExists) return res.status(400).json({ message: 'Invalid option' });
+
+  // Check if user already voted
+  const existingVote = await Post.checkPollVote(req.params.pollId, req.user.id);
+  if (existingVote.length > 0) {
+    return res.status(400).json({ message: 'User has already voted on this poll' });
+  }
+
+  await Post.addPollVote(uuidv4(), req.params.pollId, optionId, req.user.id);
+  const updatedPoll = await Post.getPoll(req.params.pollId);
+  res.json(updatedPoll);
+});
+
+exports.getPoll = catchAsync(async (req, res) => {
+  const poll = await Post.getPoll(req.params.pollId);
+  if (!poll) return res.status(404).json({ message: 'Poll not found' });
+  res.json(poll);
+});
+

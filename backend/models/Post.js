@@ -7,7 +7,8 @@ const postSelect = `
     u.username AS author_username,
     u.profile_pic AS author_pic,
     (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
-    (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+    (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count,
+    (SELECT COUNT(*) FROM shares s WHERE s.post_id = p.id) AS share_count
   FROM posts p
   JOIN users u ON u.id = p.user_id
 `;
@@ -17,7 +18,17 @@ class Post {
     const [liked] = await pool.query(
       'SELECT id FROM likes WHERE post_id = ? AND user_id = ?', [post.id, userId]
     );
-    return { ...post, liked_by_me: liked.length > 0 };
+    const [shared] = await pool.query(
+      'SELECT id FROM shares WHERE post_id = ? AND user_id = ?', [post.id, userId]
+    );
+    const poll = await this.getPollByPostId(post.id);
+    
+    return { 
+      ...post, 
+      liked_by_me: liked.length > 0,
+      shared_by_me: shared.length > 0,
+      poll: poll || null
+    };
   }
 
   static async findFeed(userId) {
@@ -139,6 +150,82 @@ class Post {
 
   static async deleteComment(id) {
     await pool.query('DELETE FROM comments WHERE id = ?', [id]);
+  }
+
+  // ── Share Methods ────────────────────────────────────────────────
+  static async checkShare(postId, userId) {
+    const [existing] = await pool.query(
+      'SELECT id FROM shares WHERE post_id = ? AND user_id = ?',
+      [postId, userId]
+    );
+    return existing;
+  }
+
+  static async addShare(shareId, postId, userId) {
+    await pool.query('INSERT INTO shares (id, post_id, user_id) VALUES (?, ?, ?)', [shareId, postId, userId]);
+  }
+
+  static async removeShare(postId, userId) {
+    await pool.query('DELETE FROM shares WHERE post_id = ? AND user_id = ?', [postId, userId]);
+  }
+
+  static async getShareCount(postId) {
+    const [[{ count }]] = await pool.query('SELECT COUNT(*) as count FROM shares WHERE post_id = ?', [postId]);
+    return count;
+  }
+
+  // ── Poll Methods ────────────────────────────────────────────────
+  static async createPoll(pollId, postId, question, options) {
+    await pool.query('INSERT INTO polls (id, post_id, question) VALUES (?, ?, ?)', [pollId, postId, question]);
+    
+    for (let option of options) {
+      const optionId = require('uuid').v4();
+      await pool.query('INSERT INTO poll_options (id, poll_id, text) VALUES (?, ?, ?)', [optionId, pollId, option]);
+    }
+  }
+
+  static async getPoll(pollId) {
+    const [poll] = await pool.query('SELECT id, post_id, question FROM polls WHERE id = ?', [pollId]);
+    
+    if (poll.length === 0) return null;
+
+    const [options] = await pool.query(
+      'SELECT id, text FROM poll_options WHERE poll_id = ?',
+      [pollId]
+    );
+
+    const enrichedOptions = await Promise.all(
+      options.map(async (option) => {
+        const [[{ voteCount }]] = await pool.query(
+          'SELECT COUNT(*) as voteCount FROM poll_votes WHERE option_id = ?',
+          [option.id]
+        );
+        return { id: option.id, text: option.text, votes: voteCount };
+      })
+    );
+
+    return { ...poll[0], options: enrichedOptions };
+  }
+
+  static async checkPollVote(pollId, userId) {
+    const [existing] = await pool.query(
+      'SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?',
+      [pollId, userId]
+    );
+    return existing;
+  }
+
+  static async addPollVote(voteId, pollId, optionId, userId) {
+    await pool.query(
+      'INSERT INTO poll_votes (id, poll_id, option_id, user_id) VALUES (?, ?, ?, ?)',
+      [voteId, pollId, optionId, userId]
+    );
+  }
+
+  static async getPollByPostId(postId) {
+    const [polls] = await pool.query('SELECT id FROM polls WHERE post_id = ?', [postId]);
+    if (polls.length === 0) return null;
+    return this.getPoll(polls[0].id);
   }
 }
 

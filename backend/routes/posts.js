@@ -14,9 +14,14 @@ router.put('/:id', auth, upload.single('media'), postController.updatePost);
 router.delete('/:id', auth, postController.deletePost);
 
 router.post('/:id/like', auth, postController.toggleLike);
+router.post('/:id/share', auth, postController.toggleShare);
 
 router.get('/:id/comments', auth, postController.getComments);
 router.post('/:id/comment', auth, postController.addComment);
 router.delete('/:id/comment/:commentId', auth, postController.deleteComment);
+
+router.post('/:id/poll', auth, postController.createPoll);
+router.get('/:id/poll/:pollId', auth, postController.getPoll);
+router.post('/:id/poll/:pollId/vote', auth, postController.votePoll);
 
 module.exports = router;
