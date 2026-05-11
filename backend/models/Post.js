@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { v4: uuidv4 } = require('uuid');
 
 const postSelect = `
   SELECT
@@ -179,7 +180,7 @@ class Post {
     await pool.query('INSERT INTO polls (id, post_id, question) VALUES (?, ?, ?)', [pollId, postId, question]);
     
     for (let option of options) {
-      const optionId = require('uuid').v4();
+      const optionId = uuidv4();
       await pool.query('INSERT INTO poll_options (id, poll_id, text) VALUES (?, ?, ?)', [optionId, pollId, option]);
     }
   }
