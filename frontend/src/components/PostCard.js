@@ -42,6 +42,18 @@ export default function PostCard({ post: initialPost, onDelete }) {
     } catch {}
   };
 
+  const toggleShare = async (e) => {
+    e?.stopPropagation();
+    try {
+      const { data } = await api.post(`/posts/${post.id}/share`);
+      setPost(p => ({ ...p, shared_by_me: data.shared, share_count: data.share_count }));
+      setShowShareMenu(false);
+    } catch (error) {
+      console.error('Failed to share:', error);
+      alert('Failed to share post');
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm('Delete this post?')) return;
     try {
@@ -181,9 +193,9 @@ export default function PostCard({ post: initialPost, onDelete }) {
         <div style={{ position: 'relative' }} ref={shareMenuRef}>
           <button onClick={handleShare} style={{
             background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: 5,
-            color: showShareMenu ? 'var(--accent)' : 'var(--text-muted)', fontSize: 13, fontWeight: 500,
+            color: post.shared_by_me ? 'var(--accent)' : 'var(--text-muted)', fontSize: 13, fontWeight: 500,
           }}>
-            📤 Share
+            <span style={{ fontSize: 17 }}>{post.shared_by_me ? '📤' : '📤'}</span> {post.share_count || 0}
           </button>
           {showShareMenu && (
             <div style={{
@@ -195,9 +207,24 @@ export default function PostCard({ post: initialPost, onDelete }) {
               borderRadius: 8,
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               zIndex: 1000,
-              minWidth: 180,
+              minWidth: 200,
               marginTop: 4,
             }} onClick={(e) => e.stopPropagation()}>
+              <button onClick={toggleShare} style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                color: post.shared_by_me ? 'var(--accent)' : 'var(--text)',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontSize: 13,
+                borderBottom: '1px solid var(--border)',
+                transition: 'background-color 0.2s',
+                fontWeight: post.shared_by_me ? '600' : '400',
+              }} onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--bg-input)'} onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
+                {post.shared_by_me ? '✓ Shared to Profile' : '📌 Share to Profile'}
+              </button>
               <button onClick={sharePostLink} style={{
                 width: '100%',
                 padding: '12px 16px',
