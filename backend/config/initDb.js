@@ -4,6 +4,26 @@ const path = require('path');
 
 async function initializeDatabase() {
   try {
+    // Migrate: Add is_shared_from column to posts table if it doesn't exist
+    try {
+      const [columns] = await pool.query(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'posts' AND COLUMN_NAME = 'is_shared_from'",
+        [process.env.DB_NAME || 'pulse_social']
+      );
+
+      if (columns.length === 0) {
+        console.log('🔄 Migrating database: Adding is_shared_from column to posts table...');
+        await pool.query(`
+          ALTER TABLE posts ADD COLUMN is_shared_from VARCHAR(36) DEFAULT NULL,
+          ADD FOREIGN KEY (is_shared_from) REFERENCES posts(id) ON DELETE CASCADE,
+          ADD INDEX idx_shared_from (is_shared_from)
+        `);
+        console.log('✓ Migration complete: is_shared_from column added');
+      }
+    } catch (migrationError) {
+      console.log('⚠️  Migration check passed (column may already exist)');
+    }
+
     // Check if shares table exists
     const [tables] = await pool.query(
       "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'shares'",

@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const pool = require('../config/db');
 const Post = require('../models/Post');
 const catchAsync = require('../middleware/catchAsync');
 
@@ -124,14 +125,36 @@ exports.deleteComment = catchAsync(async (req, res) => {
 });
 
 exports.toggleShare = catchAsync(async (req, res) => {
-  const existing = await Post.checkShare(req.params.id, req.user.id);
-  if (existing.length > 0) {
-    await Post.removeShare(req.params.id, req.user.id);
-    const count = await Post.getShareCount(req.params.id);
+  const postId = req.params.id;
+  const userId = req.user.id;
+  
+  // Check if user has already shared this post to their profile
+  const [existingShares] = await pool.query(
+    'SELECT id FROM posts WHERE is_shared_from = ? AND user_id = ?',
+    [postId, userId]
+  );
+  
+  if (existingShares.length > 0) {
+    // Remove the shared post
+    await pool.query('DELETE FROM posts WHERE is_shared_from = ? AND user_id = ?', [postId, userId]);
+    const count = await Post.getShareCount(postId);
     return res.json({ shared: false, share_count: count });
   } else {
-    await Post.addShare(uuidv4(), req.params.id, req.user.id);
-    const count = await Post.getShareCount(req.params.id);
+    // Get the original post
+    const [originalPost] = await Post.findRawById(postId);
+    if (!originalPost) return res.status(404).json({ message: 'Post not found' });
+    
+    // Create a shared post
+    const sharedPostId = uuidv4();
+    await Post.create(
+      sharedPostId, 
+      userId, 
+      originalPost.content, 
+      originalPost.image_url, 
+      originalPost.video_url,
+      postId // Mark this as shared from the original post
+    );
+    const count = await Post.getShareCount(postId);
     return res.json({ shared: true, share_count: count });
   }
 });

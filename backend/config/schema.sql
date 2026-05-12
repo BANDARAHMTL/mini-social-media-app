@@ -26,9 +26,12 @@ CREATE TABLE IF NOT EXISTS posts (
   content    TEXT         NOT NULL,
   image_url  VARCHAR(500) DEFAULT NULL,
   video_url  VARCHAR(500) DEFAULT NULL,
+  is_shared_from VARCHAR(36) DEFAULT NULL,
   created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (is_shared_from) REFERENCES posts(id) ON DELETE CASCADE,
+  INDEX idx_shared_from (is_shared_from)
 );
 
 -- ── Comments ─────────────────────────────────────────────────

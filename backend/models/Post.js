@@ -3,15 +3,20 @@ const { v4: uuidv4 } = require('uuid');
 
 const postSelect = `
   SELECT
-    p.id, p.content, p.image_url, p.video_url, p.created_at, p.updated_at,
+    p.id, p.content, p.image_url, p.video_url, p.created_at, p.updated_at, p.is_shared_from,
     u.id   AS author_id,
     u.username AS author_username,
     u.profile_pic AS author_pic,
     (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
     (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count,
-    (SELECT COUNT(*) FROM shares s WHERE s.post_id = p.id) AS share_count
+    (SELECT COUNT(*) FROM shares s WHERE s.post_id = p.id) AS share_count,
+    op.id as original_post_id,
+    ou.username as original_author_username,
+    ou.id as original_author_id
   FROM posts p
   JOIN users u ON u.id = p.user_id
+  LEFT JOIN posts op ON op.id = p.is_shared_from
+  LEFT JOIN users ou ON ou.id = op.user_id
 `;
 
 class Post {
@@ -20,15 +25,15 @@ class Post {
       const [liked] = await pool.query(
         'SELECT id FROM likes WHERE post_id = ? AND user_id = ?', [post.id, userId]
       );
-      const [shared] = await pool.query(
-        'SELECT id FROM shares WHERE post_id = ? AND user_id = ?', [post.id, userId]
+      const [sharedPosts] = await pool.query(
+        'SELECT id FROM posts WHERE is_shared_from = ? AND user_id = ?', [post.id, userId]
       );
       const poll = await this.getPollByPostId(post.id);
       
       return { 
         ...post, 
         liked_by_me: liked.length > 0,
-        shared_by_me: shared.length > 0,
+        shared_by_me: sharedPosts.length > 0,
         poll: poll || null
       };
     } catch (error) {
@@ -79,10 +84,10 @@ class Post {
     return rows;
   }
 
-  static async create(id, userId, content, imageUrl, videoUrl) {
+  static async create(id, userId, content, imageUrl, videoUrl, isSharedFrom = null) {
     await pool.query(
-      'INSERT INTO posts (id, user_id, content, image_url, video_url) VALUES (?, ?, ?, ?, ?)',
-      [id, userId, content, imageUrl || null, videoUrl || null]
+      'INSERT INTO posts (id, user_id, content, image_url, video_url, is_shared_from) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, userId, content, imageUrl || null, videoUrl || null, isSharedFrom || null]
     );
   }
 
