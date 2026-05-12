@@ -93,6 +93,39 @@ async function initializeDatabase() {
       `);
       console.log('✓ Created poll_votes table');
 
+      // Create stories table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS stories (
+          id         VARCHAR(36)  PRIMARY KEY,
+          user_id    VARCHAR(36)  NOT NULL,
+          image_url  VARCHAR(500) DEFAULT NULL,
+          video_url  VARCHAR(500) DEFAULT NULL,
+          caption    TEXT         DEFAULT NULL,
+          created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
+          expires_at DATETIME     NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          INDEX idx_expires_at (expires_at)
+        )
+      `);
+      console.log('✓ Created stories table');
+
+      // Create story_views table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS story_views (
+          id         VARCHAR(36) PRIMARY KEY,
+          story_id   VARCHAR(36) NOT NULL,
+          user_id    VARCHAR(36) NOT NULL,
+          viewed_at  DATETIME    DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_story_view (story_id, user_id),
+          FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_story_id (story_id),
+          INDEX idx_user_id (user_id)
+        )
+      `);
+      console.log('✓ Created story_views table');
+
       // Check if share_count column exists in postSelect
       const [postColumns] = await pool.query(
         "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'posts'",

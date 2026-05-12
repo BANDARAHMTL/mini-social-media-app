@@ -8,6 +8,7 @@ const authRoutes  = require('./routes/auth');
 const userRoutes  = require('./routes/users');
 const postRoutes  = require('./routes/posts');
 const messageRoutes = require('./routes/messages');
+const storyRoutes = require('./routes/stories');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/auth',  authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/stories', storyRoutes);
 
 // Health check (before auth-protected routes)
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
