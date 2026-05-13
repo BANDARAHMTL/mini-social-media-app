@@ -3,24 +3,36 @@ import api from '../api';
 import StoryViewer from './StoryViewer';
 import './StoryPreviews.css';
 
-function StoryPreviews({ userId }) {
+function StoryPreviews({ userId, refreshTrigger }) {
   const [storiesFeed, setStoriesFeed] = useState([]);
   const [selectedStoryId, setSelectedStoryId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('StoryPreviews refreshing due to trigger:', refreshTrigger);
     loadStoriesFeed();
+    
     // Refresh every 30 seconds to show new stories
     const interval = setInterval(loadStoriesFeed, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshTrigger]);
 
   const loadStoriesFeed = async () => {
     try {
+      setLoading(true);
       const res = await api.get('/stories/feed');
+      
+      // Handle both formats: direct array or { stories: [] } object
+      const storiesArray = Array.isArray(res.data) ? res.data : (res.data.stories || []);
+      
+      if (!storiesArray || storiesArray.length === 0) {
+        setStoriesFeed([]);
+        return;
+      }
+      
       // Group stories by user
       const storyGroups = {};
-      res.data.stories.forEach((story) => {
+      storiesArray.forEach((story) => {
         const key = story.user_id;
         if (!storyGroups[key]) {
           storyGroups[key] = {
@@ -37,6 +49,7 @@ function StoryPreviews({ userId }) {
       setLoading(false);
     } catch (err) {
       console.error('Failed to load stories:', err);
+      setStoriesFeed([]);
       setLoading(false);
     }
   };

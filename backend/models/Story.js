@@ -15,6 +15,11 @@ const storySelect = `
 class Story {
   static async enrichStory(story, userId) {
     try {
+      // Guard clause: return empty object if story is undefined
+      if (!story || !story.id) {
+        return story || {};
+      }
+      
       const [viewed] = await pool.query(
         'SELECT id FROM story_views WHERE story_id = ? AND user_id = ?',
         [story.id, userId]
@@ -25,7 +30,8 @@ class Story {
         viewed_by_me: viewed.length > 0
       };
     } catch (error) {
-      console.warn('Warning: Story enrichment unavailable:', error.message);
+      console.warn('Warning: Story enrichment issue:', error.message);
+      // Return story with default viewed_by_me value
       return {
         ...story,
         viewed_by_me: false

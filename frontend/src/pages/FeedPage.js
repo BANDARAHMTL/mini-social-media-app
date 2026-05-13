@@ -12,6 +12,7 @@ export default function FeedPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateStory, setShowCreateStory] = useState(false);
+  const [storyRefresh, setStoryRefresh] = useState(0);
 
   const load = async () => {
     try {
@@ -24,15 +25,19 @@ export default function FeedPage() {
 
   const handlePost = (newPost) => setPosts(p => [newPost, ...p]);
   const handleDelete = (id) => setPosts(p => p.filter(x => x.id !== id));
+  const handleStoryCreated = () => {
+    setShowCreateStory(false);
+    setStoryRefresh(prev => prev + 1); // Trigger StoryPreviews refresh
+  };
 
   return (
     <div className="page-wrapper">
       {/* Stories Section */}
-      <StoryPreviews userId={user?.id} />
+      <StoryPreviews userId={user?.id} refreshTrigger={storyRefresh} />
 
       {/* Create Story Button / Form */}
       {showCreateStory ? (
-        <CreateStory onStoryCreated={() => setShowCreateStory(false)} />
+        <CreateStory onStoryCreated={handleStoryCreated} />
       ) : (
         <button
           className="create-story-toggle"

@@ -40,18 +40,25 @@ function CreateStory({ onStoryCreated }) {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Reset form
+      // Success - call callback FIRST to trigger parent refresh
+      console.log('Story created:', response.data);
+      if (onStoryCreated) {
+        onStoryCreated(response.data.story);
+      }
+
+      // Then reset form
       setMediaFile(null);
       setMediaType(null);
       setCaption('');
-      fileInputRef.current.value = '';
+      setError('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setLoading(false);
 
-      if (onStoryCreated) onStoryCreated(response.data.story);
-
-      alert('Story posted! 📖');
     } catch (err) {
+      console.error('Story creation error:', err);
       setError(err.response?.data?.message || 'Failed to create story');
-    } finally {
       setLoading(false);
     }
   };

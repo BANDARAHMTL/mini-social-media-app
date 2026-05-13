@@ -31,7 +31,11 @@ exports.createStory = catchAsync(async (req, res) => {
   const storyId = uuidv4();
   await Story.create(storyId, userId, imageUrl, videoUrl, caption);
 
-  const [stories] = await Story.findById(storyId);
+  const stories = await Story.findById(storyId);
+  if (!stories || stories.length === 0) {
+    return res.status(500).json({ message: 'Failed to create story' });
+  }
+  
   const enriched = await Story.enrichStory(stories[0], userId);
 
   res.status(201).json({
